@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Compare Two Companies</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1f8fff;
+            margin-bottom: 30px;
+        }
+
+        .mode-buttons button {
+            background-color: #1f8fff;
+            border: none;
+            padding: 12px 20px;
+            margin: 10px;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .mode-buttons button:hover {
+            background-color: #0d6cd1;
+        }
+
+        .selector-section {
+            margin-top: 25px;
+        }
+
+        select, input {
+            padding: 10px;
+            width: 250px;
+            border-radius: 6px;
+            border: none;
+            font-size: 15px;
+            margin: 10px;
+        }
+
+        .compare-btn {
+            background-color: #1f8fff;
+            border: none;
+            padding: 14px 28px;
+            margin-top: 20px;
+            color: white;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .compare-btn:hover {
+            background-color: #0d6cd1;
+        }
+
+        table {
+            width: 90%;
+            margin: 30px auto;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: #1f8fff;
+            padding: 12px;
+            color: white;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .highlight {
+            color: #00ff6a;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Compare Two Companies</h1>
+
+    <div class="mode-buttons">
+        <button onclick="setMode('dropdown')">Dropdown Mode</button>
+        <button onclick="setMode('search')">Search Mode</button>
+    </div>
+
+    <div id="dropdown-mode" class="selector-section">
+        <select id="companyA"></select>
+        <select id="companyB"></select>
+    </div>
+
+    <div id="search-mode" class="selector-section" style="display:none;">
+        <input type="text" id="searchA" placeholder="Search Company A">
+        <input type="text" id="searchB" placeholder="Search Company B">
+    </div>
+
+    <button class="compare-btn" onclick="compare()">Compare</button>
+
+    <table id="results-table" style="display:none;">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th id="nameA"></th>
+                <th id="nameB"></th>
+            </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+    </table>
+
+<script>
+    const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSDaesqR_hISAIlNKylhLrbUYo_oBs-mmj0dKb9WjCYT6kzL09KJBFMye79mDvIB7HC4ArWDgYglk2c/pub?output=csv";
+
+    let companies = [];
+
+    fetch(sheetURL)
+        .then(res => res.text())
+        .then(data => {
+            let rows = data.split("\n").slice(1);
+            companies = rows.map(r => r.split(","));
+            fillDropdowns();
+        });
+
+    function fillDropdowns() {
+        let selectA = document.getElementById("companyA");
+        let selectB = document.getElementById("companyB");
+
+        companies.forEach(c => {
+            selectA.innerHTML += `<option>${c[0]}</option>`;
+            selectB.innerHTML += `<option>${c[0]}</option>`;
+        });
+    }
+
+    function setMode(mode) {
+        document.getElementById("dropdown-mode").style.display = mode === 'dropdown' ? 'block' : 'none';
+        document.getElementById("search-mode").style.display = mode === 'search' ? 'block' : 'none';
+    }
+
+    function compare() {
+        let nameA = document.getElementById("companyA").value;
+        let nameB = document.getElementById("companyB").value;
+
+        let dataA = companies.find(c => c[0] === nameA);
+        let dataB = companies.find(c => c[0] === nameB);
+
+        document.getElementById("nameA").innerText = nameA;
+        document.getElementById("nameB").innerText = nameB;
+
+        let metrics = ["Ticker", "Exchange", "Current Price", "Market Cap", "P/E", "52-Week High", "52-Week Low", "Dividend Yield", "EPS", "Sector", "Industry", "Country"];
+
+        let tbody = document.getElementById("results-body");
+        tbody.innerHTML = "";
+
+        metrics.forEach((m, i) => {
+            let valA = dataA[i+1];
+            let valB = dataB[i+1];
+
+            let highlightA = parseFloat(valA) > parseFloat(valB) ? "highlight" : "";
+            let highlightB = parseFloat(valB) > parseFloat(valA) ? "highlight" : "";
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${m}</td>
+                    <td class="${highlightA}">${valA}</td>
+                    <td class="${highlightB}">${valB}</td>
+                </tr>`;
+        });
+
+        document.getElementById("results-table").style.display = "table";
+    }
+</script>
+
+</body>
+</html>
